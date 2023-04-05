@@ -2,7 +2,7 @@
 
 Bash script for executing commands remotely using MQTT
 
-This script connects to an MQTT broker and subscribes to a topic called openwrt/command. It waits for incoming messages, which are expected to be shell commands to be executed on the current machine. The script executes the received command and sends the result back to the MQTT broker on a topic called openwrt/response.
+This script connects to an MQTT broker and subscribes to a topic called device/command. It waits for incoming messages, which are expected to be shell commands to be executed on the current machine. The script executes the received command and sends the result back to the MQTT broker on a topic called openwrt/response.
 
 
 Usage
@@ -12,9 +12,9 @@ Before running the script, change the following variables to fit your environmen
 ```
 broker="your.mqtt.broker"
 port="your-mqtt-broker-port"
-topic="openwrt/command"
-response_topic="openwrt/response"
-client_id="openwrt"
+topic="device/command"
+response_topic="device/response"
+client_id="device"
 username="your-mqtt-username"
 password="your-mqtt-password"
 ```
