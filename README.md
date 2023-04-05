@@ -20,3 +20,10 @@ password="your-mqtt-password"
 ```
 
 Once you've made those changes, run the script using bash mqtt-command-executor.sh. The script will connect to the MQTT broker and listen for incoming messages on the openwrt/command topic. When a message is received, it will be executed in a shell and the result sent back to the broker on the openwrt/response topic.
+
+
+
+License
+
+GNU General Public License v3.0
+Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
