@@ -3,6 +3,7 @@
 # MQTT Command Processor
 
 A Bash script to execute commands received via MQTT.
+This script is designed with minimal dependencies, making it suitable for a wide range of systems, including OpenWRT and other smart devices running Tiny Linux. It requires only the presence of the mosquitto-client for operation.
 
 ## Configuration
 
