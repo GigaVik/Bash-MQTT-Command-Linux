@@ -1,50 +1,59 @@
 #!/bin/bash
 
-broker="your.mqtt.broker"
-port="your-mqtt-broker-port"
-topic="device/command"
-response_topic="device/response"
-client_id="device"
-username="your-mqtt-username"
-password="your-mqtt-password"
+# Check if the config file exists
+if [ ! -f "./config.ini" ]; then
+    echo "Config file not found."
+    exit 1
+fi
 
-#Setting LC_CTYPE for Cyrillic support in messages
-#export LC_CTYPE=ru_RU.UTF-8
+# Source the configuration file
+. ./config.ini
 
-#Function for sending messages in array format
+# Function for sending messages
 send_message() {
-  lines=("$@")
-  result_array=("${lines[@]}")
-  mosquitto_pub -h "$broker" -p "$port" -i "$client_id" -t "$response_topic" -u "$username" -P "$password" -m "$(printf "%s\n" "${result_array[@]}")"
+    local lines=("$@")
+    mosquitto_pub -h "$broker" -p "$port" -i "$client_id" -t "$response_topic" -u "$username" -P "$password" -m "$(printf "%s\n" "${lines[@]}")" >> "$LOG_FILE" 2>&1
 }
 
-
-#Function for processing received messages
+# Function for processing received messages
 on_message() {
-  message=$1
+    message=$1
+    echo "$(date): Processing message: $message" >> "$LOG_FILE"
 
+    if [ "$USE_WHITELIST" = "yes" ]; then
+        # Use command whitelist for security
+        case "$message" in
+            "status")
+                result="System is running"
+                ;;
+            "version")
+                result=$(cat /etc/os-release)
+                ;;
+            *)
+                result="Unknown command"
+                ;;
+        esac
+    else
+        # WARNING: Executing received command directly. This is insecure.
+        # Log the command for auditing purposes
+        echo "$(date): Executing command: $message" >> "$LOG_FILE"
+        # Execute the command and capture output
+        result=$(eval "$message" 2>&1)
+        if [ $? -ne 0 ]; then
+            result="Command failed: $result"
+        fi
+    fi
 
-#If the message is not empty, execute processing
-  if [ -n "$message" ]
-  then
-      # Display the received message
-      echo "Received message: $message"
-      # Execute the received command in shell and save the result
-      result=$(eval "$message")
-      # Send an empty message to the command topic to remove the message from the queue
-      mosquitto_pub -h "$broker" -p "$port" -i "$client_id" -t "$topic" -m "" -u "$username" -P "$password"
-      # Send the result of the command execution in array format
-      send_message "${result}"
-  fi
-  }
+    echo "$(date): Sending response: $result" >> "$LOG_FILE"
+    send_message "$result"
+}
 
-# Connecting to MQTT broker using login and password
+# Main loop to receive and process messages
 while true
 do
-  message=$(mosquitto_sub -h "$broker" -p "$port" -i "$client_id" -t "$topic" -u "$username" -P "$password" -C 1)
-  if [ -n "${message// }" ]
-  then
-    # Process the received message
-    on_message "$message"
-  fi
+    message=$(mosquitto_sub -h "$broker" -p "$port" -i "$client_id" -t "$topic" -u "$username" -P "$password" -C 1)
+    if [ -n "${message// }" ]; then
+        on_message "$message"
+    fi
+    sleep 1
 done
