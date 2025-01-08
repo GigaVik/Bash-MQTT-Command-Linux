@@ -1,16 +1,14 @@
-[RU](/README_RU.md) | **ENG**
+[RU](README_RU.md) | **ENG**
 
-# Bash-MQTT-Command-Linux
+# MQTT Command Processor
 
-Bash script for executing commands remotely using MQTT.
+A Bash script to execute commands received via MQTT.
 
-This script connects to an MQTT broker and subscribes to a topic called `device/command`. It waits for incoming messages, which are expected to be shell commands to be executed on the current machine. The script executes the received command and sends the result back to the MQTT broker on a topic called `device/response`.
+## Configuration
 
-## Usage
+Before running the script, configure the settings in `config.ini`:
 
-Before running the script, change the following variables to fit your environment:
-
-```
+~~~
 broker="your.mqtt.broker"
 port="your-mqtt-broker-port"
 topic="device/command"
@@ -18,32 +16,45 @@ response_topic="device/response"
 client_id="device"
 username="your-mqtt-username"
 password="your-mqtt-password"
-```
+LOG_FILE="mqtt_script.log"
+USE_WHITELIST="yes"
+~~~
 
-Once you've made those changes, run the script using:
+## Usage
 
-```
-bash mqtt-command-executor.sh
-```
+1. Ensure `mosquitto_pub` and `mosquitto_sub` are installed.
+2. Configure `config.ini` with your MQTT broker details.
+3. Run the script:
 
-The script will connect to the MQTT broker and listen for incoming messages on the `device/command` topic. When a message is received, it will be executed in a shell, and the result will be sent back to the broker on the `device/response` topic.
+   ~~~
+   bash mqtt_command.sh
+   ~~~
 
-## Warnings and Potential Issues
+The script connects to the MQTT broker and listens for messages on the specified topic. It processes the messages and sends responses back to the broker.
 
-1. **Security Risk**: This script executes shell commands received from an MQTT broker. This can be extremely dangerous if the broker or the topic is not secure. An attacker could send malicious commands to your system.
+## Security Warnings
 
-2. **No Input Validation**: The script does not validate or sanitize the incoming commands. Any command received will be executed as-is, which could lead to unintended consequences.
+- **Executing Received Commands**: When `USE_WHITELIST` is "no", the script executes any command received over MQTT, which is highly insecure. Only use this in a controlled environment.
+- **Command Whitelist**: It is strongly recommended to keep `USE_WHITELIST` set to "yes" to only allow predefined commands.
 
-3. **Dependence on MQTT Broker Security**: The security of this script heavily relies on the security of your MQTT broker. If the broker is compromised, your system could be as well.
+## Risks of `USE_WHITELIST = "no"`
 
-4. **No Error Handling**: The script lacks robust error handling. If a command fails or the MQTT connection drops, the script may not handle it gracefully.
+Setting `USE_WHITELIST` to "no" allows the script to execute **any command** received via MQTT. This can lead to severe consequences, including:
 
-5. **Resource Usage**: Executing arbitrary commands can lead to high resource usage (CPU, memory, etc.), which could affect the performance of your system.
+1. **System compromise and unauthorized access.**
+2. **Data loss or corruption.**
+3. **Installation and execution of malware.**
+4. **Exhaustion of system resources (CPU, memory, disk).**
+5. **Exploitation of network vulnerabilities.**
+6. **Privilege escalation and gaining root access.**
+7. **Manipulation or deletion of system logs.**
+8. **Creation of backdoors or persistence mechanisms.**
 
-6. **No Logging**: The script does not log the commands executed or their results. This makes it difficult to audit or debug issues.
+## Logging
+
+- All activities are logged to the file specified by `LOG_FILE`.
+- The log includes message reception, processing, and responses sent.
 
 ## License
 
 GNU General Public License v3.0
-
-Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
